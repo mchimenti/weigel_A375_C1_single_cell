@@ -64,13 +64,18 @@ t2g <- getBM(attributes = c("ensembl_transcript_id", "transcript_version",
                             "transcript_biotype"), mart = mart)
 t2g <- dplyr::rename(t2g, target_id = ensembl_transcript_id, ens_gene = ensembl_gene_id, ext_gene = external_gene_name)
 
+## testing 
+s2c_small <- head(s2c)
+so_small <- sleuth_prep(s2c_small, target_mapping = t2g, extra_bootstrap_summary = TRUE)
 
+
+plot_pca(so_small, color_by = 'cell', text_labels = FALSE)
+filter(kal_tab_small, target_id == 'ENST00000245479.2')   ## there is no SOX9 expression, so it is filtered out
+
+mygenes <- c("SOX9", "GPX3","IGFBP5","AIM1","SEMA3B","EPHB3","S100A2","FOXD3","NRN1","PRDM7","YPEL4","RASGRP1")
+my_t2g <- filter(t2g, ext_gene %in% mygenes)
+
+my_t2g <- mutate(my_t2g, target_id_vers = paste0(target_id,'.', transcript_version))
+
+## big 'so' with all 78 samples 
 so <- sleuth_prep(s2c, target_mapping = t2g, extra_bootstrap_summary = TRUE)
-
-plot_pca(so, color_by = 'cell', text_labels = FALSE)
-
-sleuth_live(so)
-
-plot_loadings(so, pc_input=2)
-plot_bootstrap(so, 'ENSMUST00000082402.1', color_by = 'type')
-plot_bootstrap(so, 'ENSMUST00000042235.14', color_by = 'type')
