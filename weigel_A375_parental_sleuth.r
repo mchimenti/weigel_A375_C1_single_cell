@@ -43,14 +43,17 @@ base_dir <- "~/iihg/sc_rna_seq/weigel/C1_A375_scRNA"
 kal_files <- list.files(path = '.', pattern = '*output')
 kal_dirs <- file.path(base_dir, kal_files)
 
-samples <- unlist(lapply(kal_files, strsplit, split='\\.'))
-samples <- sort(samples, decreasing = TRUE)[1:78]
+sample <- unlist(lapply(kal_files, strsplit, split='\\.'))
+sample <- sort(sample, decreasing = TRUE)[1:78]
 
 ## create a R matrix containing sample names and conditions from a text file
-s2c <- read.table(file.path(base_dir, "design.txt"), header = TRUE, stringsAsFactors=FALSE)
+s2c <- as.data.frame(sample)
 
 ## add a column called "kal_dirs" containing paths to the data
-s2c <- dplyr::mutate(s2c, path = kal_dirs)
+s2c <- dplyr::mutate(s2c, path = sort(kal_dirs, decreasing = TRUE))
+
+## add a column called cell number 
+s2c <- dplyr::mutate(s2c, cell = as.factor(paste0("cell", 1:78)))
 
 ## Get common gene names for transcripts
 
@@ -63,8 +66,10 @@ t2g <- dplyr::rename(t2g, target_id = ensembl_transcript_id, ens_gene = ensembl_
 
 
 so <- sleuth_prep(s2c, target_mapping = t2g, extra_bootstrap_summary = TRUE)
-plot_pca(so, color_by = 'type', text_labels = TRUE)
-plot_pca(so, color_by = 'id', text_labels = FALSE)
+
+plot_pca(so, color_by = 'cell', text_labels = FALSE)
+
+sleuth_live(so)
 
 plot_loadings(so, pc_input=2)
 plot_bootstrap(so, 'ENSMUST00000082402.1', color_by = 'type')
