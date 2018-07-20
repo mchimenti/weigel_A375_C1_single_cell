@@ -25,7 +25,7 @@ library(biomaRt)
 library("AnnotationDbi")
 library("org.Hs.eg.db")
 #Exploratory analysis
-library(dplyr)
+library(tidyverse)
 
 #pathway
 library(pathview)
@@ -64,6 +64,8 @@ t2g <- getBM(attributes = c("ensembl_transcript_id", "transcript_version",
                             "transcript_biotype"), mart = mart)
 t2g <- dplyr::rename(t2g, target_id = ensembl_transcript_id, ens_gene = ensembl_gene_id, ext_gene = external_gene_name)
 
+
+
 ## testing 
 s2c_small <- head(s2c)
 so_small <- sleuth_prep(s2c_small, target_mapping = t2g, extra_bootstrap_summary = TRUE)
@@ -74,8 +76,34 @@ filter(kal_tab_small, target_id == 'ENST00000245479.2')   ## there is no SOX9 ex
 
 mygenes <- c("SOX9", "GPX3","IGFBP5","AIM1","SEMA3B","EPHB3","S100A2","FOXD3","NRN1","PRDM7","YPEL4","RASGRP1")
 my_t2g <- filter(t2g, ext_gene %in% mygenes)
-
 my_t2g <- mutate(my_t2g, target_id_vers = paste0(target_id,'.', transcript_version))
+
+png(filename = 'test.png', width = 1200, height = 1500, res = 150)
+plot_transcript_heatmap(so_small, my_t2g$target_id_vers, 
+                        units = 'tpm', cluster_transcripts = TRUE, trans = 'log', offset = 1,
+                        annotation_cols = NULL, 
+                        color_high = 'yellow', color_mid = 'magenta', color_low = 'black')
+dev.off()
+
+
+
+
 
 ## big 'so' with all 78 samples 
 so <- sleuth_prep(s2c, target_mapping = t2g, extra_bootstrap_summary = TRUE)
+
+png(filename = 'test.png', width = 1200, height = 1500, res = 150)
+plot_transcript_heatmap(so, my_t2g$target_id_vers, 
+                        units = 'tpm', 
+                        cluster_transcripts = TRUE, 
+                        trans = 'log', 
+                        offset = 1,
+                        annotation_cols = NULL,
+                        color_high = 'yellow', color_mid = 'magenta', color_low = 'black')
+dev.off()
+
+kal_tab <- kallisto_table(so, include_covariates = FALSE)
+kal_tab <- select(kal_tab, c("target_id", "sample", "tpm"))
+kal_tab <- spread(kal_tab, key = 'sample', value = 'tpm')
+
+
