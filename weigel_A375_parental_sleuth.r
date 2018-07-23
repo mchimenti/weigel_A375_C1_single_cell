@@ -92,18 +92,31 @@ dev.off()
 ## big 'so' with all 78 samples 
 so <- sleuth_prep(s2c, target_mapping = t2g, extra_bootstrap_summary = TRUE)
 
-png(filename = 'test.png', width = 1200, height = 1500, res = 150)
-plot_transcript_heatmap(so, my_t2g$target_id_vers, 
+png(filename = 'A375_single_cell_exp_heatmap.png', width = 1200, height = 1500, res = 150)
+p <- plot_transcript_heatmap(so, my_t2g$target_id_vers, 
                         units = 'tpm', 
                         cluster_transcripts = TRUE, 
                         trans = 'log', 
                         offset = 1,
                         annotation_cols = NULL,
-                        color_high = 'yellow', color_mid = 'magenta', color_low = 'black')
+                        color_high = 'yellow', color_mid = 'magenta', color_low = 'black',
+                        main = "Gene expression in 78 A375 parental single cells by Fluidigm C1 (log TPM)",
+                        fontsize = 8)
 dev.off()
 
 kal_tab <- kallisto_table(so, include_covariates = FALSE)
 kal_tab <- select(kal_tab, c("target_id", "sample", "tpm"))
-kal_tab <- spread(kal_tab, key = 'sample', value = 'tpm')
 
+kal_tab_my_genes <- filter(kal_tab, target_id %in% my_t2g$target_id_vers)
+kal_tab_my_genes <- mutate(kal_tab_my_genes, ext_gene = t2g$ext_gene)
 
+png(filename = 'A375_parental_scRNA_gene_boxplot.png', width = 1200, height = 1200, res = 150)
+p <- ggplot(kal_tab_my_genes, aes(x = as.factor(target_id), y = as.numeric(tpm))) + 
+       geom_boxplot(outlier.colour = 'red', outlier.size = 1)
+p <- p + coord_flip(ylim = c(0,200))
+p <- p + theme(axis.text.y = element_text(size = 8, face = 'bold'))
+p <- p + ylab("transcripts per million (tpm)") + xlab("transcript isoform") + ggtitle("Boxplot of TPM expression in 78 A375 single cells: Fluidigm C1 data")
+print(p)
+dev.off()
+
+write.csv(file = "transcript_to_gene_tab.csv", x = my_t2g)
